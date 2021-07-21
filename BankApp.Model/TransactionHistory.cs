@@ -15,13 +15,11 @@ namespace BankApp.Model
         public string ReceiverAccountNumber { get; set; }
         public string Description { get; set; }
         public double Balance { get; set; }
-        public DateTimeOffset TransactionDate { get; set; }
+        public string TransactionDate { get; set; }
 
-        private int count = 1;
         public TransactionHistory()
         {
-            Id += count++;
-            TransactionDate = DateTime.Now;
+            TransactionDate = DateTime.Now.ToShortDateString();
         }
     }
 }

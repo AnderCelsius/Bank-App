@@ -416,9 +416,9 @@ namespace BankApp.UI
                             {
                                 // variables needed for transfer
                                 int accountId;
+                                int otherAccountId;
                                 double amount = 0;
                                 string description = null;
-                                string receiverName = string.Empty;
                                 string receiverAccNumber = string.Empty;
                                 while (true)
                                 {
@@ -435,22 +435,6 @@ namespace BankApp.UI
                                         continue;
                                     }
 
-                                    Console.Write($"Enter amount to Transfer: ");
-                                    var amountChoice = Console.ReadLine();
-
-                                    while (true)
-                                    {
-                                        bool isSuccessful = double.TryParse(amountChoice, out amount);
-                                        if (isSuccessful)
-                                            break;
-                                        else
-                                        {
-                                            Console.WriteLine("Invalid transaction! Please enter a number");
-                                            continue;
-                                        }
-
-                                    }
-
                                     while (true)
                                     {
                                         Console.WriteLine($"Choose Transfer channel: ");
@@ -465,22 +449,22 @@ namespace BankApp.UI
                                         var response = Console.ReadLine();
                                         if (response == "1")
                                         {
-                                            transferType += Utils.TransactionDescription.POS;
+                                            transferType += $"{Utils.TransactionDescription.POS} transfer";
                                             break;
                                         }
                                         else if (response == "2")
                                         {
-                                            transferType += Utils.TransactionDescription.ATM;
+                                            transferType += $"{Utils.TransactionDescription.ATM} transfer";
                                             break;
                                         }
                                         else if (response == "3")
                                         {
-                                            transferType += Utils.TransactionDescription.USSD;
+                                            transferType += $"{Utils.TransactionDescription.USSD} transfer";
                                             break;
                                         }
                                         else if (response == "4")
                                         {
-                                            transferType += Utils.TransactionDescription.FIP;
+                                            transferType += $"{Utils.TransactionDescription.FIP} transfer";
                                             break;
                                         }
                                         else
@@ -490,53 +474,106 @@ namespace BankApp.UI
                                         }
                                     }
 
-                                    //SendMoney(double amount, int accountId, string receiverAccountNumber, string receiverAccountName, string description)
+                                    Console.WriteLine("");
+                                    Console.WriteLine("******************************************");
+                                    Console.WriteLine("Press 1 to transfer to your other accounts");
+                                    Console.WriteLine("Press 2 to transfer to another customer");
+                                    var transferChoice = Console.ReadLine();
 
-                                    while (true)
+                                    if (transferChoice == "1")
                                     {
-                                        Console.Write("Enter receiver account number:");
-                                        var inputedAccNum = Console.ReadLine();
-                                        var isValidAccNum = Checker.ValidateTransAccount(inputedAccNum);
-                                        Console.Clear();
-
-                                        if (isValidAccNum != true)
+                                        foreach (var account in customer.Account)
                                         {
-                                            Console.WriteLine("Invalid account number. Please check and try again");
-                                            Console.WriteLine("");
+                                            if (customer.Account.Count < 2)
+                                            {
+                                                Console.WriteLine("You do not have any other account.");
+                                                break;
+                                            }
+                                            Console.WriteLine("Select account to transfer to:");
+                                            if (account.Id != accountId)
+                                                Console.WriteLine($"press {account.Id}. {account.AccountName} {account.AccountNumber} {account.AccountType}");
+                                        }
+ 
+                                        var accToTransferTo = Console.ReadLine();
+                                        bool isSuccessful = int.TryParse(accToTransferTo, out otherAccountId);
+                                        if (!isSuccessful)
+                                        {
+                                            Console.WriteLine("Customer Id must be a number");
                                             continue;
                                         }
-                                        else
-                                        {
-                                            receiverAccNumber += inputedAccNum;
-                                            Console.Clear();
-                                            break;
-                                        }
-                                    }
 
-                                    while (true)
+                                        while (true)
+                                        {
+                                            Console.Write($"Enter amount to Transfer: ");
+                                            var amountChoice = Console.ReadLine();
+                                            bool response = double.TryParse(amountChoice, out amount);
+                                            if (response)
+                                                break;
+                                            else
+                                            {
+                                                Console.WriteLine("Invalid transaction! Please enter a number");
+                                                continue;
+                                            }
+
+                                        }
+
+                                        Console.WriteLine(newCustomer.TransferToOtherAccount(amount, accountId, otherAccountId, description));
+                                        break;
+                                    }
+                                    else if (transferChoice == "2")
                                     {
-                                        Console.Write("Enter receiver account name:");
-                                        var inputedAccName = Console.ReadLine();
-                                        var isValidAccName = Checker.ValidateTransAccount(inputedAccName);
+                                        Console.Write($"Enter amount to Transfer: ");
+                                        var amountChoice = Console.ReadLine();
 
-                                        if (isValidAccName == true)
+                                        while (true)
                                         {
-                                            Console.WriteLine("Name should contain only alphabeths");
-                                            Console.WriteLine("");
-                                            continue;
+                                            bool isSuccessful = double.TryParse(amountChoice, out amount);
+                                            if (isSuccessful)
+                                                break;
+                                            else
+                                            {
+                                                Console.WriteLine("Invalid transaction! Please enter a number");
+                                                continue;
+                                            }
+
                                         }
-                                        else
+
+                                        //SendMoney(double amount, int accountId, string receiverAccountNumber, string receiverAccountName, string description)
+
+                                        while (true)
                                         {
-                                            receiverName += inputedAccName;
+                                            Console.Write("Enter receiver account number:");
+                                            var inputedAccNum = Console.ReadLine();
+                                            var isValidAccNum = Checker.ValidateTransAccount(inputedAccNum);
                                             Console.Clear();
-                                            break;
+
+                                            if (isValidAccNum != true)
+                                            {
+                                                Console.WriteLine("Invalid account number. Please check and try again");
+                                                Console.WriteLine("");
+                                                continue;
+                                            }
+                                            else
+                                            {
+                                                receiverAccNumber += inputedAccNum;
+                                                Console.Clear();
+                                                break;
+                                            }
                                         }
+
+                                        var transfer = newCustomer.SendMoney(amount, accountId, receiverAccNumber, description);
+                                        Console.WriteLine(transfer);
+                                        break;
+                                    }
+                                
+                                    else
+                                    {
+                                        Console.WriteLine("Invalid input! Please try again");
+                                        continue;
                                     }
 
-                                    var transfer = newCustomer.SendMoney(amount, accountId, receiverAccNumber, receiverName, description);
-                                    Console.WriteLine(transfer);
-                                    break;
-                                }
+
+                                }  
                             }
                             else if (input == "5")
                             {
