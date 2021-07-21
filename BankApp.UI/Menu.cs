@@ -280,6 +280,7 @@ namespace BankApp.UI
                                 };
 
                                 var message = newCustomer.CreateAccount(account, customer);
+                                Console.Clear();
                                 Console.WriteLine(message);
                             }
 
@@ -288,6 +289,7 @@ namespace BankApp.UI
                                 Console.Clear();
                                 int accountId;
                                 double amount = 0;
+                                string depositeType = "";
 
                                 while (true)
                                 {
@@ -322,8 +324,49 @@ namespace BankApp.UI
                                             continue;
                                         }
                                     }
-                                    var deposit = newCustomer.MakeDeposit(amount, accountId);
+
+                                    while (true)
+                                    {
+                                        Console.Clear();
+                                        Console.WriteLine($"Choose withdrawal channel: ");
+                                        int count = 1;
+
+                                        foreach (var withdrawChannel in Enum.GetNames(typeof(Utils.TransactionDescription)))
+                                        {
+                                            Console.WriteLine($"{count}: {withdrawChannel}");
+                                            count++;
+                                        }
+                                        var response = Console.ReadLine();
+                                        if (response == "1")
+                                        {
+                                            depositeType += Utils.TransactionDescription.POS;
+                                            break;
+                                        }
+                                        else if (response == "2")
+                                        {
+                                            depositeType += Utils.TransactionDescription.ATM;
+                                            break;
+                                        }
+                                        else if (response == "3")
+                                        {
+                                            depositeType += Utils.TransactionDescription.USSD;
+                                            break;
+                                        }
+                                        else if (response == "4")
+                                        {
+                                            depositeType += Utils.TransactionDescription.FIP;
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine("Invalid input. Please try again");
+                                            continue;
+                                        }
+                                    }
+
+                                    var deposit = newCustomer.MakeDeposit(amount, accountId, depositeType);
                                     Console.WriteLine(deposit);
+                                    Console.Clear();
                                     break;
                                 }
                             }
@@ -371,7 +414,8 @@ namespace BankApp.UI
 
                                     while (true)
                                     {
-                                        Console.Write($"Choose withdrawal channel: ");
+                                        Console.Clear();
+                                        Console.WriteLine($"Choose withdrawal channel: ");
                                         int count = 1;
 
                                         foreach (var withdrawChannel in Enum.GetNames(typeof(Utils.TransactionDescription)))
@@ -409,6 +453,7 @@ namespace BankApp.UI
 
                                     var withdraw = newCustomer.MakeWithdrawal(amount, accountId, withdrawType);
                                     Console.WriteLine(withdraw);
+                                    Console.Clear();
                                     break;
                                 }
                             }
@@ -563,6 +608,7 @@ namespace BankApp.UI
 
                                         var transfer = newCustomer.SendMoney(amount, accountId, receiverAccNumber, description);
                                         Console.WriteLine(transfer);
+                                        Console.Clear();
                                         break;
                                     }
                                 

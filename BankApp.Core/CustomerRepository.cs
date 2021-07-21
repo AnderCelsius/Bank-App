@@ -68,7 +68,7 @@ namespace BankApp.Core
         /// <param name="amount"></param>
         /// <param name="accountId"></param>
         /// <returns></returns>
-        public string MakeDeposit(double amount, int accountId)
+        public string MakeDeposit(double amount, int accountId, string description)
         {
             var message = string.Empty;
             var previousTransactionCount = DataStore.TransactionHistoryTable.Count;
@@ -81,8 +81,9 @@ namespace BankApp.Core
                     newTransaction.Id = transactionCount;
                     newTransaction.AccountId = accountId;
                     newTransaction.Amount = amount;
+                    newTransaction.Description = description;
                     newTransaction.Sender = account.AccountName;
-                    newTransaction.TransactionType = Utils.TransactionType.Credit.ToString();
+                    newTransaction.TransactionType = Utils.TransactionType.Cr.ToString();
                     account.AccountBalance += amount;
                     newTransaction.Balance = account.AccountBalance;
                     account.TransactionHistory.Add(newTransaction);
@@ -131,7 +132,7 @@ namespace BankApp.Core
                         newTransaction.Sender = account.AccountName;
                         newTransaction.ReceiverAccountNumber = receiverAccountNumber;
                         newTransaction.Description = description;
-                        newTransaction.TransactionType = Utils.TransactionType.Debit.ToString();
+                        newTransaction.TransactionType = Utils.TransactionType.Dr.ToString();
                         account.AccountBalance -= amount;
                         newTransaction.Balance = account.AccountBalance;
                         account.TransactionHistory.Add(newTransaction);
@@ -146,7 +147,7 @@ namespace BankApp.Core
                         newTransaction.Sender = account.AccountName;
                         newTransaction.ReceiverAccountNumber = receiverAccountNumber;
                         newTransaction.Description = description;
-                        newTransaction.TransactionType = Utils.TransactionType.Debit.ToString();
+                        newTransaction.TransactionType = Utils.TransactionType.Dr.ToString();
                         account.AccountBalance -= amount;
                         newTransaction.Balance = account.AccountBalance;
                         account.TransactionHistory.Add(newTransaction);
@@ -197,7 +198,7 @@ namespace BankApp.Core
                         newTransaction.Amount = amount;
                         newTransaction.Sender = account.AccountNumber;
                         newTransaction.Description = description;
-                        newTransaction.TransactionType = Utils.TransactionType.Debit.ToString();
+                        newTransaction.TransactionType = Utils.TransactionType.Dr.ToString();
                         account.AccountBalance -= amount;
                         newTransaction.Balance = account.AccountBalance;
                         account.TransactionHistory.Add(newTransaction);
@@ -211,7 +212,7 @@ namespace BankApp.Core
                         newTransaction.Amount = amount;
                         newTransaction.Sender = account.AccountName;
                         newTransaction.Description = description;
-                        newTransaction.TransactionType = Utils.TransactionType.Debit.ToString();
+                        newTransaction.TransactionType = Utils.TransactionType.Dr.ToString();
                         account.AccountBalance -= amount;
                         newTransaction.Balance = account.AccountBalance;
                         account.TransactionHistory.Add(newTransaction);
@@ -231,8 +232,9 @@ namespace BankApp.Core
                     receiverTransaction.Id = transactionCount;
                     receiverTransaction.AccountId = accountId;
                     receiverTransaction.Amount = amount;
+                    receiverTransaction.Description = description;
                     receiverTransaction.Sender = account.AccountName;
-                    receiverTransaction.TransactionType = Utils.TransactionType.Credit.ToString();
+                    receiverTransaction.TransactionType = Utils.TransactionType.Cr.ToString();
                     account.AccountBalance += amount;
                     receiverTransaction.Balance = account.AccountBalance;
                     account.TransactionHistory.Add(receiverTransaction);
@@ -281,7 +283,7 @@ namespace BankApp.Core
                         newTransaction.AccountId = accountId;
                         newTransaction.Amount = amount;
                         newTransaction.Description = description;
-                        newTransaction.TransactionType = Utils.TransactionType.Debit.ToString();
+                        newTransaction.TransactionType = Utils.TransactionType.Dr.ToString();
                         account.AccountBalance -= amount;
                         newTransaction.Balance = account.AccountBalance;
                         account.TransactionHistory.Add(newTransaction);
@@ -293,7 +295,7 @@ namespace BankApp.Core
                         newTransaction.AccountId = accountId;
                         newTransaction.Amount = amount;
                         newTransaction.Description = description;
-                        newTransaction.TransactionType = Utils.TransactionType.Debit.ToString();
+                        newTransaction.TransactionType = Utils.TransactionType.Dr.ToString();
                         // implement pin for security
                         account.AccountBalance -= amount;
                         newTransaction.Balance = account.AccountBalance;
@@ -380,7 +382,7 @@ namespace BankApp.Core
             if (DataStore.TransactionHistoryTable.Count != 0)
             {
                 Console.Clear();
-                PrintTable.PrintRow($"ACCOUNT STATEMENT ON ACCOUNT NO {DataStore.AccountTable[accountId-1].AccountNumber}");
+                Console.WriteLine($"ACCOUNT STATEMENT ON ACCOUNT NO {DataStore.AccountTable[accountId-1].AccountNumber}");
                 PrintTable.PrintLine();
                 PrintTable.PrintRow();
                 PrintTable.PrintRow("DATE", "DESCRIPTION", "AMOUNT", "BALANCE");
@@ -390,7 +392,7 @@ namespace BankApp.Core
                 {
                     if (transaction.AccountId == accountId)
                     {
-                        PrintTable.PrintRow($"{transaction.TransactionDate}", $"{transaction.Description}", $"{transaction.Amount}", $"{transaction.Balance}");
+                        PrintTable.PrintRow($"{transaction.TransactionDate}", $"{transaction.Description}", $"{transaction.Amount}{transaction.TransactionType}", $"{transaction.Balance}");
                         PrintTable.PrintLine();
 
                     }

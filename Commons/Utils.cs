@@ -12,8 +12,8 @@ namespace Commons
 
         public enum TransactionType
         {
-            Credit = 'C',
-            Debit = 'D'
+            Cr,
+            Dr
         }
 
         public enum TransactionDescription
