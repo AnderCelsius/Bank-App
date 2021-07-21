@@ -7,46 +7,55 @@ namespace BankApp.Core
 {
     public class CustomerRepository
     {
+        int accountCount = 1;
+        public static string RegisterCustomer(Customer model, string password)
+        {
+            string message = string.Empty;
+            var previousUserCount = DataStore.CustomerTable.Count;
+
+            if (model != null)
+            {
+                model.Password = password;
+
+                DataStore.CustomerTable.Add(model);
+
+                var updatedUserCount = DataStore.CustomerTable.Count;
+                if (updatedUserCount > previousUserCount) //Confirm that a customer record have been updated in customer table.
+                    message += "Registration successful";
+                else
+                    message += "Registration failed";
+            }
+
+            return message;
+        }
         /// <summary>
         /// Create new customer account
         /// </summary>
         /// <param name="model"></param>
         /// <param name="id"></param>
         /// <returns></returns>
-        public string CreateAccount(Account model, int id)
+        public string CreateAccount(Account model, Customer customer)
         {
             var message = string.Empty;
             var previousAccountCount = DataStore.AccountTable.Count;
             if (model != null)
             {
-                foreach (var customer in DataStore.CustomerTable)
-                {
-                    if (customer.Id == id)
-                    {
-                        model.CustomerId = id;
-                        customer.Account.Add(
-                          new Account()
-                          {
-                              AccountName = customer.FullName,
-                              AccountNumber = model.AccountNumber,
-                              AccountType = model.AccountType,
-                              AccountBalance = model.AccountBalance
-                          }
-                        );
-                    }
-                }
-                model.CustomerId = id;
-
-                DataStore.AccountTable.Add(model);
-
-                int updatedAccountCount = DataStore.AccountTable.Count;
-
-                if (updatedAccountCount > previousAccountCount)
-                    message = "Account created successfuly";
+                model.Id = accountCount;
+                model.CustomerId = customer.Id;
+                model.AccountName = customer.FullName;
+                customer.Account.Add(model);
+                accountCount++;
             }
+            DataStore.AccountTable.Add(model);
+
+            int updatedAccountCount = DataStore.AccountTable.Count;
+
+            if (updatedAccountCount > previousAccountCount)
+                message += "Account created successfuly";
+
             else
             {
-                message = "please all fields are required";
+                message += "please all fields are required";
             }
 
             return message;
@@ -64,23 +73,22 @@ namespace BankApp.Core
             var previousTransactionCount = DataStore.TransactionHistoryTable.Count;
             var newTransaction = new TransactionHistory();
 
-            
-
             foreach (var account in DataStore.AccountTable)
             {
-                if (account.Id == accountId  && amount > 0)
-                { 
+                if (account.Id == accountId && amount > 0)
+                {
+                    newTransaction.AccountId = accountId;
                     newTransaction.Amount = amount;
                     newTransaction.Sender = account.AccountName;
                     newTransaction.TransactionType = Utils.TransactionType.Credit.ToString();
-                    newTransaction.TransactionDate = DateTime.Now;
+                    newTransaction.TransactionDate = DateTime.Now.Date;
                     account.AccountBalance += amount;
                     newTransaction.Balance = account.AccountBalance;
                 }
             }
             DataStore.TransactionHistoryTable.Add(newTransaction);
 
-            int updatedTransactionCount = DataStore.AccountTable.Count;
+            int updatedTransactionCount = DataStore.TransactionHistoryTable.Count;
 
             if (updatedTransactionCount > previousTransactionCount)
                 message += "Transaction Succesful";
@@ -112,7 +120,7 @@ namespace BankApp.Core
             {
                 if (account.Id == accountId)
                 {
-                    if (account.AccountType == Utils.AccountType.Current.ToString()) //Current account holder can empty their account
+                    if (account.AccountType == Utils.AccountType.Current.ToString() && account.AccountBalance >= amount) //Current account holder can empty their account
                     {
                         newTransaction.Amount = amount;
                         newTransaction.Sender = account.AccountName;
@@ -137,11 +145,11 @@ namespace BankApp.Core
                     }
                     else
                         return "Insufficient Funds.";
-                    
+
                 }
             }
             DataStore.TransactionHistoryTable.Add(newTransaction);
-            int updatedTransactionCount = DataStore.AccountTable.Count;
+            int updatedTransactionCount = DataStore.TransactionHistoryTable.Count;
 
             if (updatedTransactionCount > previousTransactionCount)
                 message += "Transaction Succesful";
@@ -163,6 +171,7 @@ namespace BankApp.Core
         public string MakeWithdrawal(double amount, int accountId, string description)
         {
             var message = string.Empty;
+            
             var previousTransactionCount = DataStore.TransactionHistoryTable.Count;
             var newTransaction = new TransactionHistory();
 
@@ -178,7 +187,7 @@ namespace BankApp.Core
                         account.AccountBalance -= amount;
                         newTransaction.Balance = account.AccountBalance;
                     }
-                    else if (account.AccountType == Utils.AccountType.Savings.ToString() && account.AccountBalance > amount + 1000)
+                    else if (account.AccountType == Utils.AccountType.Savings.ToString() && account.AccountBalance > (amount + 1000))
                     {
                         newTransaction.Amount = amount;
                         newTransaction.Description = description;
@@ -194,7 +203,7 @@ namespace BankApp.Core
                 }
             }
             DataStore.TransactionHistoryTable.Add(newTransaction);
-            int updatedTransactionCount = DataStore.AccountTable.Count;
+            int updatedTransactionCount = DataStore.TransactionHistoryTable.Count;
 
             if (updatedTransactionCount > previousTransactionCount)
                 message += "Transaction Succesful";
@@ -211,7 +220,7 @@ namespace BankApp.Core
         /// Get Customer account balance for specified account.
         /// </summary>
         /// <param name="accountId"></param>
-        /// <returns></returns>
+        /// <returns></returns> 
         public string GetAccountBalance(int accountId)
         {
             var message = string.Empty;
@@ -231,14 +240,45 @@ namespace BankApp.Core
         /// </summary>
         /// <param name="accountId"></param>
         /// <returns></returns>
-        public string GetStatementOfAccount(int accountId)
+        public string GetAccountDetails()
         {
             var message = string.Empty;
 
+            if (DataStore.AccountTable.Count != 0)
+            {
+                Console.Clear();
+                PrintTable.PrintLine();
+                PrintTable.PrintRow("FULL NAME", "ACCOUNT NUMBER", "ACCOUNT TYPE", "ACCOUNT BALANCE");
+                PrintTable.PrintLine();
+
+                foreach (var account in DataStore.AccountTable)
+                {
+                    PrintTable.PrintRow(account.AccountName, account.AccountNumber, account.AccountType, account.AccountBalance.ToString());
+                    PrintTable.PrintLine();
+                }
+            }
+            else
+            {
+                message += $"No Account Created yet";
+            }
+
+            return message;
+        }
+
+        /// <summary>
+        /// Prints out customer account details and statements in a nicely formated table
+        /// </summary>
+        /// <param name="accountId"></param>
+        /// <returns></returns>
+        public string GetStatementOfAccount(int accountId)
+        {
+            var message = string.Empty;
             if (DataStore.TransactionHistoryTable.Count != 0)
             {
                 Console.Clear();
                 PrintTable.PrintLine();
+                PrintTable.PrintRow($"ACCOUNT STATEMENT ON ACCOUNT NO {DataStore.AccountTable[accountId].AccountNumber}");
+                PrintTable.PrintRow();
                 PrintTable.PrintRow("DATE", "DESCRIPTION", "AMOUNT", "BALANCE");
                 PrintTable.PrintLine();
 

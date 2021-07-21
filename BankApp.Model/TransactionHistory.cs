@@ -17,7 +17,7 @@ namespace BankApp.Model
         public double Balance { get; set; }
         public DateTimeOffset TransactionDate { get; set; }
 
-        private int count;
+        private int count = 1;
         public TransactionHistory()
         {
             Id += count++;

@@ -8,24 +8,14 @@ namespace BankApp.UI
     {
         static void Main(string[] args)
         {
-            //var DataBase = new DataStore();
-            //DataBase.AddCustomer(new Customer() { Email = "obi@gmail.com"});
-            //string email = "obi@gmail.com";
-            //var cust = new Customer();
-            //try
-            //{
-            //    cust = DataBase.CheckMail(email);
-            //    Console.WriteLine("email found");
-            //}
-            //catch (Exception)
-            //{
-            //    Console.WriteLine("Invalid email or password");
-            //}
-
-            //Console.WriteLine("ENd");
-            var myBank = new UserInterface();
+            var myBank = new Menu();
             myBank.RunApp();
-            
+
+
+            //String accounNumber = startWith + r;
+            //Console.WriteLine(accounNumber);
+
+
         }
     }
 }

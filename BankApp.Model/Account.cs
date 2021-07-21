@@ -1,28 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Commons;
 
 namespace BankApp.Model
 {
     public class Account
     {
-        public int Id { get; private set; }
+        public int Id { get; set; }
         public int CustomerId { get; set; }
-        public int AccountNumber { get; set; }
+        public string AccountNumber { get; set; }
         public string AccountName { get; set; }
         public string AccountType { get; set; }
         public double AccountBalance { get; set; }
-        public TransactionHistory TransactionHistory { get; set; } = null;
+        public List<TransactionHistory> TransactionHistory { get; set; } 
 
-        private int count;
-        private int accountNumber = 100;
+        private string accountNumber = Utils.GenerateAccountNumber();
         private double accountBalance = 0;
         public Account()
         {
-            Id += count++;
             AccountBalance = accountBalance;
             AccountNumber = accountNumber;
-            accountNumber++;
+            TransactionHistory = new List<TransactionHistory>();
         }
     }
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace BankApp.Core
+namespace Commons
 {
     public class PrintTable
     {
@@ -15,7 +15,7 @@ namespace BankApp.Core
 
         public static void PrintRow(params string[] col)
         {
-            int Width = (TableWidth - col.Length) / col.Length;
+            int Width = (TableWidth - col.Length) / 4;
             const string seed = "|";
             string row = col.Aggregate(seed, (seperator, colText) => seperator + GetCenterAllignedText(colText, Width) + seed);
             Console.WriteLine(row);
