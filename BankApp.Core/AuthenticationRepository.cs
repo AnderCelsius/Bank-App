@@ -23,5 +23,10 @@ namespace BankApp.Core
             return isValid;
         }
 
+        public static bool Logout(string email, string password)
+        {
+            return Login(email, password) == false;
+        }
+
     }
 }

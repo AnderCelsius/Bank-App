@@ -7,27 +7,42 @@ namespace BankApp.Core
 {
     public class CustomerRepository
     {
-        int transactionCount = 1;
+        //int transactionCount = 1;
         int accountCount = 1;
-        public static string RegisterCustomer(Customer model, string password)
+        public static string RegisterCustomer(string firstName, string lastName, string email, string phoneNumber, string password)
         {
             string message = string.Empty;
             var previousUserCount = DataStore.CustomerTable.Count;
 
-            if (model != null)
-            {
-                model.Password = password;
+            var foundCustomer = DataStore.CustomerTable.Find(i => i.Email == email);
 
-                DataStore.CustomerTable.Add(model);
+            if (foundCustomer == null)
+            {
+                var customer = new Customer
+                {
+                    FirstName = firstName,
+                    LastName = lastName,
+                    Email = email,
+                    PhoneNumber = phoneNumber,
+                    Password = password
+                };
+
+                DataStore.CustomerTable.Add(customer);
+
 
                 var updatedUserCount = DataStore.CustomerTable.Count;
                 if (updatedUserCount > previousUserCount) //Confirm that a customer record have been updated in customer table.
-                    message += "Registration successful";
+                    message = "Registration successful";
                 else
-                    message += "Registration failed";
-            }
+                    message = "Registration failed";
 
+            }
+            else
+            {
+                message = "An account with this email already exist. Please login instead";
+            }
             return message;
+
         }
         /// <summary>
         /// Create new customer account
@@ -78,7 +93,7 @@ namespace BankApp.Core
             {
                 if (account.Id == accountId && amount > 0)
                 {
-                    newTransaction.Id = transactionCount;
+                    //newTransaction.Id = transactionCount;
                     newTransaction.AccountId = accountId;
                     newTransaction.Amount = amount;
                     newTransaction.Description = description;
@@ -87,7 +102,7 @@ namespace BankApp.Core
                     account.AccountBalance += amount;
                     newTransaction.Balance = account.AccountBalance;
                     account.TransactionHistory.Add(newTransaction);
-                    transactionCount++;
+                    //transactionCount++;
                 }
             }
             DataStore.TransactionHistoryTable.Add(newTransaction);
@@ -126,7 +141,7 @@ namespace BankApp.Core
                 {
                     if (account.AccountType == Utils.AccountType.Current.ToString() && account.AccountBalance >= amount) //Current account holder can empty their account
                     {
-                        newTransaction.Id = transactionCount;
+                        //newTransaction.Id = transactionCount;
                         newTransaction.AccountId = accountId;
                         newTransaction.Amount = amount;
                         newTransaction.Sender = account.AccountName;
@@ -136,12 +151,12 @@ namespace BankApp.Core
                         account.AccountBalance -= amount;
                         newTransaction.Balance = account.AccountBalance;
                         account.TransactionHistory.Add(newTransaction);
-                        transactionCount++;
+                        //transactionCount++;
                     }
                     //Savings account holders must maintain a minimum balance of N1000
                     else if (account.AccountType == Utils.AccountType.Savings.ToString() && account.AccountBalance > amount + 1000)
                     {
-                        newTransaction.Id = transactionCount;
+                        //newTransaction.Id = transactionCount;
                         newTransaction.AccountId = accountId;
                         newTransaction.Amount = amount;
                         newTransaction.Sender = account.AccountName;
@@ -151,7 +166,7 @@ namespace BankApp.Core
                         account.AccountBalance -= amount;
                         newTransaction.Balance = account.AccountBalance;
                         account.TransactionHistory.Add(newTransaction);
-                        transactionCount++;
+                        //transactionCount++;
                     }
                     else
                         return "Insufficient Funds.";
@@ -179,7 +194,7 @@ namespace BankApp.Core
         /// <param name="otherAccountId"></param>
         /// <param name="description"></param>
         /// <returns></returns>
-        public string TransferToOtherAccount(double amount, int accountId, int otherAccountId, string description)
+        public string TransferToOtherAccount(double amount, int accountId, int otherAccountId, string accountDescription, string otherDescription)
         {
             var message = string.Empty;
             var previousTransactionCount = DataStore.TransactionHistoryTable.Count;
@@ -193,30 +208,30 @@ namespace BankApp.Core
                 {
                     if (account.AccountType == Utils.AccountType.Current.ToString() && account.AccountBalance >= amount) //Current account holder can empty their account
                     {
-                        newTransaction.Id = transactionCount;
+                        //newTransaction.Id = transactionCount;
                         newTransaction.AccountId = accountId;
                         newTransaction.Amount = amount;
                         newTransaction.Sender = account.AccountNumber;
-                        newTransaction.Description = description;
+                        newTransaction.Description = accountDescription;
                         newTransaction.TransactionType = Utils.TransactionType.Dr.ToString();
                         account.AccountBalance -= amount;
                         newTransaction.Balance = account.AccountBalance;
                         account.TransactionHistory.Add(newTransaction);
-                        transactionCount++;
+                        //transactionCount++;
                     }
                     //Savings account holders must maintain a minimum balance of N1000
                     else if (account.AccountType == Utils.AccountType.Savings.ToString() && account.AccountBalance > amount + 1000)
                     {
-                        newTransaction.Id = transactionCount;
+                        //newTransaction.Id = transactionCount;
                         newTransaction.AccountId = accountId;
                         newTransaction.Amount = amount;
                         newTransaction.Sender = account.AccountName;
-                        newTransaction.Description = description;
+                        newTransaction.Description = accountDescription;
                         newTransaction.TransactionType = Utils.TransactionType.Dr.ToString();
                         account.AccountBalance -= amount;
                         newTransaction.Balance = account.AccountBalance;
                         account.TransactionHistory.Add(newTransaction);
-                        transactionCount++;
+                        //transactionCount++;
                     }
                     else
                         return "Insufficient Funds.";
@@ -229,16 +244,16 @@ namespace BankApp.Core
             {
                 if (account.Id == otherAccountId)
                 {
-                    receiverTransaction.Id = transactionCount;
-                    receiverTransaction.AccountId = accountId;
+                    //receiverTransaction.Id = transactionCount;
+                    receiverTransaction.AccountId = otherAccountId;
                     receiverTransaction.Amount = amount;
-                    receiverTransaction.Description = description;
+                    receiverTransaction.Description = otherDescription;
                     receiverTransaction.Sender = account.AccountName;
                     receiverTransaction.TransactionType = Utils.TransactionType.Cr.ToString();
                     account.AccountBalance += amount;
                     receiverTransaction.Balance = account.AccountBalance;
                     account.TransactionHistory.Add(receiverTransaction);
-                    transactionCount++;
+                    //transactionCount++;
                 }
             }
 
@@ -277,9 +292,9 @@ namespace BankApp.Core
             {
                 if (account.Id == accountId)
                 {
-                    if (account.AccountType == Utils.AccountType.Current.ToString())
+                    if (account.AccountType == Utils.AccountType.Current.ToString() && account.AccountBalance >= amount)
                     {
-                        newTransaction.Id = transactionCount;
+                        //newTransaction.Id = transactionCount;
                         newTransaction.AccountId = accountId;
                         newTransaction.Amount = amount;
                         newTransaction.Description = description;
@@ -287,11 +302,11 @@ namespace BankApp.Core
                         account.AccountBalance -= amount;
                         newTransaction.Balance = account.AccountBalance;
                         account.TransactionHistory.Add(newTransaction);
-                        transactionCount++;
+                        //transactionCount++;
                     }
                     else if (account.AccountType == Utils.AccountType.Savings.ToString() && account.AccountBalance > (amount + 1000))
                     {
-                        newTransaction.Id = transactionCount;
+                        //newTransaction.Id = transactionCount;
                         newTransaction.AccountId = accountId;
                         newTransaction.Amount = amount;
                         newTransaction.Description = description;
@@ -300,7 +315,7 @@ namespace BankApp.Core
                         account.AccountBalance -= amount;
                         newTransaction.Balance = account.AccountBalance;
                         account.TransactionHistory.Add(newTransaction);
-                        transactionCount++;
+                        //transactionCount++;
                     }
                     else
                         return "Insufficient Funds.";
@@ -335,7 +350,7 @@ namespace BankApp.Core
                 if (!(account.Id == accountId))
                     message = "Account does not exist";
                 else
-                    message = $"Your Account Balance is N{account.AccountBalance.ToString()}";
+                    message = $"Your Account Balance is N{account.AccountBalance}";
             }
 
             return message;
@@ -359,7 +374,7 @@ namespace BankApp.Core
 
                 foreach (var account in DataStore.AccountTable)
                 {
-                    PrintTable.PrintRow(account.AccountName, account.AccountNumber, account.AccountType, account.AccountBalance.ToString());
+                    PrintTable.PrintRow($"{account.AccountName}", $"{account.AccountNumber}", $"{account.AccountType}", $"N{account.AccountBalance}");
                     PrintTable.PrintLine();
                 }
             }
@@ -381,8 +396,9 @@ namespace BankApp.Core
             var message = string.Empty;
             if (DataStore.TransactionHistoryTable.Count != 0)
             {
+                var count = accountCount - 2;
                 Console.Clear();
-                Console.WriteLine($"ACCOUNT STATEMENT ON ACCOUNT NO {DataStore.AccountTable[accountId-1].AccountNumber}");
+                Console.WriteLine($"ACCOUNT STATEMENT ON ACCOUNT NO {DataStore.AccountTable[count].AccountNumber}");
                 PrintTable.PrintLine();
                 PrintTable.PrintRow();
                 PrintTable.PrintRow("DATE", "DESCRIPTION", "AMOUNT", "BALANCE");
@@ -392,7 +408,7 @@ namespace BankApp.Core
                 {
                     if (transaction.AccountId == accountId)
                     {
-                        PrintTable.PrintRow($"{transaction.TransactionDate}", $"{transaction.Description}", $"{transaction.Amount}{transaction.TransactionType}", $"{transaction.Balance}");
+                        PrintTable.PrintRow($"{transaction.TransactionDate}", $"{transaction.Description}", $"{transaction.Amount}{transaction.TransactionType}", $"N{transaction.Balance}");
                         PrintTable.PrintLine();
 
                     }

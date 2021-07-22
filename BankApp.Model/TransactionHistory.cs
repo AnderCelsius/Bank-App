@@ -17,8 +17,10 @@ namespace BankApp.Model
         public double Balance { get; set; }
         public string TransactionDate { get; set; }
 
+        private int count = 1;
         public TransactionHistory()
         {
+            Id = count++;
             TransactionDate = DateTime.Now.ToShortDateString();
         }
     }
