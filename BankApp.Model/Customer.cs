@@ -18,7 +18,7 @@ namespace BankApp.Model
         public DateTime DateCreated { get; set; }
         public List<Account> Account { get; set; }
 
-        private int count = 1;
+        private static int count = 1;
         public Customer()
         {
             Id += count++;

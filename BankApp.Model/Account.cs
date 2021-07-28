@@ -15,12 +15,11 @@ namespace BankApp.Model
         public double AccountBalance { get; set; }
         public List<TransactionHistory> TransactionHistory { get; set; } 
 
-        private string accountNumber = Utils.GenerateAccountNumber();
         private double accountBalance = 0;
         public Account()
         {
             AccountBalance = accountBalance;
-            AccountNumber = accountNumber;
+            AccountNumber = Utils.GenerateAccountNumber();
             TransactionHistory = new List<TransactionHistory>();
         }
     }

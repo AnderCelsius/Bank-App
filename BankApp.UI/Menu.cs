@@ -13,6 +13,7 @@ namespace BankApp.UI
         public void RunApp()
         {
             var newCustomer = new CustomerRepository();
+            var newTransaction = new TransactionRepository();
 
             Console.WriteLine("WELCOME TO ONE BANK");
             Console.WriteLine("");
@@ -225,6 +226,7 @@ namespace BankApp.UI
                         {
                             if(customer.Email == email)
                             {
+                                Console.Clear();
                                 Console.WriteLine("Login Succesful");
                                 while (true)
                                 {
@@ -244,34 +246,7 @@ namespace BankApp.UI
                                     if (input == "1")
                                     {
                                         Console.Clear();
-                                        // variables required to create account
-                                        var accountType = string.Empty;
-                                        while (true)
-                                        {
-                                            Console.WriteLine("Select Account Type");
-                                            var count = 1;
-                                            foreach (var accType in Enum.GetNames(typeof(Utils.AccountType)))
-                                            {
-                                                Console.WriteLine($"{count}: {accType}");
-                                                count++;
-                                            }
-                                            var response = Console.ReadLine();
-                                            if (response == "1")
-                                            {
-                                                accountType += Utils.AccountType.Savings;
-                                                break;
-                                            }
-                                            else if (response == "2")
-                                            {
-                                                accountType += Utils.AccountType.Current;
-                                                break;
-                                            }
-                                            else
-                                            {
-                                                Console.WriteLine("Invalid input");
-                                                continue;
-                                            }
-                                        }
+                                        var accountType = MenuOptions.CreateAccountUI();
                                         // Create new account instance for the customer
                                         var account = new Account
                                         {
@@ -285,175 +260,168 @@ namespace BankApp.UI
 
                                     else if (input == "2")
                                     {
-                                        Console.Clear();
-                                        int accountId;
+                                        Console.Clear(); 
                                         double amount = 0;
-                                        string depositeType = "";
 
                                         while (true)
                                         {
-                                            Console.WriteLine("Select Account to carry out transaction");
-                                            foreach (var account in DataStore.AccountTable)
+                                            if (customer.Account.Count > 0)
                                             {
-                                                Console.WriteLine($"{account.Id}. {account.AccountName} {account.AccountNumber} {account.AccountType}");
-                                            }
-                                            var accId = Console.ReadLine();
-                                            try
-                                            {
-                                                accountId = Convert.ToInt32(accId);
-                                            }
-                                            catch (Exception)
-                                            {
-
-                                                throw new FormatException("Customer Id must be a number");
-                                            }
-
-                                            Console.Clear();
-                                            Console.Write($"Enter amount to deposit: ");
-                                            var amountChoice = Console.ReadLine();
-
-                                            while (true)
-                                            {
-                                                bool success = double.TryParse(amountChoice, out amount);
-                                                if (success)
-                                                    break;
-                                                else
-                                                {
-                                                    Console.WriteLine("Invalid transaction! Please enter a number");
-                                                    continue;
-                                                }
-                                            }
-
-                                            while (true)
-                                            {
-                                                Console.Clear();
-                                                Console.WriteLine($"Choose withdrawal channel: ");
                                                 int count = 1;
-
-                                                foreach (var withdrawChannel in Enum.GetNames(typeof(Utils.TransactionDescription)))
+                                                string acntNum = "";
+                                                var accNumMap = new Dictionary<string, string>();
+                                                Console.WriteLine("Select Account to carry out transaction");
+                                                foreach (var account in customer.Account)
                                                 {
-                                                    Console.WriteLine($"{count}: {withdrawChannel}");
+                                                    Console.WriteLine($"{count}. {account.AccountName} {account.AccountNumber} {account.AccountType}");
+                                                    accNumMap.Add(count.ToString(), account.AccountNumber);
                                                     count++;
                                                 }
-                                                var response = Console.ReadLine();
-                                                if (response == "1")
+                                                var accId = Console.ReadLine();
+
+                                                if (accNumMap.TryGetValue(accId, out acntNum))
                                                 {
-                                                    depositeType += Utils.TransactionDescription.POS;
-                                                    break;
-                                                }
-                                                else if (response == "2")
-                                                {
-                                                    depositeType += Utils.TransactionDescription.ATM;
-                                                    break;
-                                                }
-                                                else if (response == "3")
-                                                {
-                                                    depositeType += Utils.TransactionDescription.USSD;
-                                                    break;
-                                                }
-                                                else if (response == "4")
-                                                {
-                                                    depositeType += Utils.TransactionDescription.FIP;
+                                                    Console.Clear();
+                                                   
+
+                                                    while (true)
+                                                    {
+                                                        Console.Write($"Enter amount to deposit: ");
+                                                        var amountChoice = Console.ReadLine();
+
+                                                        bool success = double.TryParse(amountChoice, out amount);
+                                                        if (success)
+                                                            break;
+                                                        else
+                                                        {
+                                                            Console.WriteLine("Invalid transaction! Please enter a number");
+                                                            continue;
+                                                        }
+                                                    }
+                                                    var withdrawChannel = MenuOptions.TrasactionChannel();
+
+                                                    var deposit = newTransaction.MakeDeposit(amount, acntNum, withdrawChannel);
+                                                    Console.Clear();
+                                                    Console.WriteLine(deposit);
                                                     break;
                                                 }
                                                 else
                                                 {
-                                                    Console.WriteLine("Invalid input. Please try again");
+                                                    Console.WriteLine("Sorry, you have chosen an invalid option");
+                                                    break;
+                                                }
+    
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine("You do not have an account yet. Do you wish to create one?");
+                                                Console.WriteLine("1. Create Account");
+                                                Console.WriteLine("2. Back");
+                                                var userInput = Console.ReadLine();
+                                                if (userInput == "1")
+                                                {
+                                                    Console.Clear();
+                                                    var accountType = MenuOptions.CreateAccountUI();
+                                                    // Create new account instance for the customer
+                                                    var account = new Account
+                                                    {
+                                                        AccountType = accountType
+                                                    };
+
+                                                    var message = newCustomer.CreateAccount(account, customer);
+                                                    Console.Clear();
+                                                    Console.WriteLine(message);
+                                                }
+                                                else if (userInput == "2")
+                                                    break;
+                                                else
+                                                {
+                                                    Console.WriteLine("Invalid input");
                                                     continue;
                                                 }
                                             }
 
-                                            var deposit = newCustomer.MakeDeposit(amount, accountId, depositeType);
-                                            Console.WriteLine(deposit);
-                                            Console.Clear();
-                                            break;
                                         }
                                     }
                                     else if (input == "3")
                                     {
-                                        // variables needed for withdrawal
-                                        int accountId;
-                                        double amount = 0;
-                                        string withdrawType = string.Empty;
-
                                         while (true)
                                         {
                                             Console.Clear();
-                                            Console.WriteLine("Select Account to carry out transaction");
-                                            foreach (var account in customer.Account)
+                                            if(customer.Account.Count > 0)
                                             {
-                                                Console.WriteLine($"{account.Id}. {account.AccountName} {account.AccountNumber} {account.AccountType}");
-                                            }
-                                            var accId = Console.ReadLine();
-                                            bool success = int.TryParse(accId, out accountId);
-                                            if (!success)
-                                            {
-                                                Console.WriteLine("Customer Id must be a number");
-                                                continue;
-                                            }
-
-                                            else
-                                            {
-                                                Console.Write($"Enter amount to withdraw: ");
-                                                var amountChoice = Console.ReadLine();
-
-                                                while (true)
-                                                {
-                                                    bool isSuccessful = double.TryParse(amountChoice, out amount);
-                                                    if (isSuccessful)
-                                                        break;
-                                                    else
-                                                    {
-                                                        Console.WriteLine("Invalid transaction! Please enter a number");
-                                                        continue;
-                                                    }
-
-                                                }
-                                            }
-
-                                            while (true)
-                                            {
-                                                Console.Clear();
-                                                Console.WriteLine($"Choose withdrawal channel: ");
                                                 int count = 1;
-
-                                                foreach (var withdrawChannel in Enum.GetNames(typeof(Utils.TransactionDescription)))
+                                                Console.WriteLine("Select Account to carry out transaction");
+                                                foreach (var account in customer.Account)
                                                 {
-                                                    Console.WriteLine($"{count}: {withdrawChannel}");
+                                                    Console.WriteLine($"{count}. {account.AccountName} {account.AccountNumber} {account.AccountType}");
                                                     count++;
                                                 }
-                                                var response = Console.ReadLine();
-                                                if (response == "1")
+                                                var accId = Console.ReadLine();
+                                                bool success = int.TryParse(accId, out int accountId);
+                                                // variables needed for withdrawal
+                                                double amount;
+                                                if (!success)
                                                 {
-                                                    withdrawType += Utils.TransactionDescription.POS;
-                                                    break;
+                                                    Console.WriteLine("Customer Id must be a number");
+                                                    continue;
                                                 }
-                                                else if (response == "2")
-                                                {
-                                                    withdrawType += Utils.TransactionDescription.ATM;
-                                                    break;
-                                                }
-                                                else if (response == "3")
-                                                {
-                                                    withdrawType += Utils.TransactionDescription.USSD;
-                                                    break;
-                                                }
-                                                else if (response == "4")
-                                                {
-                                                    withdrawType += Utils.TransactionDescription.FIP;
-                                                    break;
-                                                }
+
                                                 else
                                                 {
-                                                    Console.WriteLine("Invalid input. Please try again");
+                                                    Console.Write($"Enter amount to withdraw: ");
+                                                    var amountChoice = Console.ReadLine();
+
+                                                    while (true)
+                                                    {
+                                                        bool isSuccessful = double.TryParse(amountChoice, out amount);
+                                                        if (isSuccessful)
+                                                            break;
+                                                        else
+                                                        {
+                                                            Console.WriteLine("Invalid transaction! Please enter a number");
+                                                            continue;
+                                                        }
+
+                                                    }
+                                                }
+
+                                                var transactionChannel = MenuOptions.TrasactionChannel();
+
+                                                string withdraw = newTransaction.MakeWithdrawal(amount, accountId, transactionChannel);
+                                                Console.Clear();
+                                                Console.WriteLine(withdraw);
+                                                break;
+                                            }
+                                            
+                                            else
+                                            {
+                                                Console.WriteLine("You do not have an account yet. Do you wish to create one?");
+                                                Console.WriteLine("1. Create Account");
+                                                Console.WriteLine("2. Back");
+                                                var userInput = Console.ReadLine();
+                                                if (userInput == "1")
+                                                {
+                                                    Console.Clear();
+                                                    var accountType = MenuOptions.CreateAccountUI();
+                                                    // Create new account instance for the customer
+                                                    var account = new Account
+                                                    {
+                                                        AccountType = accountType
+                                                    };
+
+                                                    var message = newCustomer.CreateAccount(account, customer);
+                                                    Console.Clear();
+                                                    Console.WriteLine(message);
+                                                }
+                                                else if (userInput == "2")
+                                                    break;
+                                                else
+                                                {
+                                                    Console.WriteLine("Invalid input");
                                                     continue;
                                                 }
                                             }
-
-                                            var withdraw = newCustomer.MakeWithdrawal(amount, accountId, withdrawType);
-                                            Console.Clear();
-                                            Console.WriteLine(withdraw);
-                                            break;
                                         }
                                     }
                                     else if (input == "4")
@@ -464,173 +432,214 @@ namespace BankApp.UI
                                         string description = null;
                                         string otherDescription = null;
                                         string receiverAccNumber = string.Empty;
+                                        string senderAccNumber = string.Empty;
                                         while (true)
                                         {
-                                            Console.WriteLine("Select Account to carry out transaction");
-                                            foreach (var account in customer.Account)
+                                            if(customer.Account.Count > 0)
                                             {
-                                                Console.WriteLine($"{account.Id}. {account.AccountName} {account.AccountNumber} {account.AccountType}");
-                                            }
-                                            var accId = Console.ReadLine();
-                                            bool success = int.TryParse(accId, out accountId);
-                                            if (!success)
-                                            {
-                                                Console.WriteLine("Customer Id must be a number");
-                                                continue;
-                                            }
-
-                                            while (true)
-                                            {
-                                                Console.WriteLine($"Choose Transfer channel: ");
-                                                int count = 1;
-
-                                                foreach (var transferChannel in Enum.GetNames(typeof(Utils.TransactionDescription)))
+                                                Console.Clear();
+                                                Console.WriteLine("Select Account to carry out transaction");
+                                                var count = 1;
+                                                foreach (var account in customer.Account)
                                                 {
-                                                    Console.WriteLine($"{count}: {transferChannel}");
+                                                    Console.WriteLine($"{count}. {account.AccountName} {account.AccountNumber} {account.AccountType}");
                                                     count++;
+                                                    senderAccNumber = account.AccountNumber;
                                                 }
-                                                var response = Console.ReadLine();
-                                                if (response == "1")
+                                                var accId = Console.ReadLine();
+                                                bool success = int.TryParse(accId, out accountId);
+                                                if (!success)
                                                 {
-                                                    description += $"{Utils.TransactionDescription.POS} transfer";
-                                                    otherDescription += $"{Utils.TransactionDescription.POS} transfer from {customer.Account[accountId - 1]}";
+                                                    Console.WriteLine("Customer Id must be a number");
+                                                    continue;
+                                                }
+
+                                                while (true)
+                                                {
+                                                    Console.WriteLine($"Choose Transfer channel: ");
+                                                    int cou = 1;
+
+                                                    foreach (var transferChannel in Enum.GetNames(typeof(Utils.TransactionDescription)))
+                                                    {
+                                                        Console.WriteLine($"{cou}: {transferChannel}");
+                                                        cou++;
+                                                    }
+                                                    var response = Console.ReadLine();
+                                                    if (response == "1")
+                                                    {
+                                                        description += $"{Utils.TransactionDescription.POS} transfer";
+                                                        otherDescription += $"{Utils.TransactionDescription.POS} transfer from {senderAccNumber}";
+                                                        break;
+                                                    }
+                                                    else if (response == "2")
+                                                    {
+                                                        description += $"{Utils.TransactionDescription.ATM} transfer";
+                                                        otherDescription += $"{Utils.TransactionDescription.ATM} transfer from {senderAccNumber}";
+                                                        break;
+                                                    }
+                                                    else if (response == "3")
+                                                    {
+                                                        description += $"{Utils.TransactionDescription.USSD} transfer";
+                                                        otherDescription += $"{Utils.TransactionDescription.POS} transfer from {senderAccNumber}";
+                                                        break;
+                                                    }
+                                                    else if (response == "4")
+                                                    {
+                                                        description += $"{Utils.TransactionDescription.FIP} transfer";
+                                                        otherDescription += $"{Utils.TransactionDescription.POS} transfer from {senderAccNumber}";
+                                                        break;
+                                                    }
+                                                    else
+                                                    {
+                                                        Console.WriteLine("Invalid input. Please try again");
+                                                        continue;
+                                                    }
+                                                }
+
+                                                Console.WriteLine("");
+                                                Console.WriteLine("******************************************");
+                                                Console.WriteLine("Press 1 to transfer to your other accounts");
+                                                Console.WriteLine("Press 2 to transfer to another customer");
+                                                Console.WriteLine("Press 3 to cancel");
+                                                var transferChoice = Console.ReadLine();
+
+                                                double amount;
+                                                if (transferChoice == "1")
+                                                {
+                                                    foreach (var account in customer.Account)
+                                                    {
+                                                        if (customer.Account.Count < 1)
+                                                        {
+                                                            Console.WriteLine("You do not have any other account.");
+                                                            Console.WriteLine("Press 1 to create a new account");
+                                                            Console.WriteLine("Press 2 to cancel operation");
+                                                            break;
+                                                        }
+                                                        
+                                                        else if (account.Id != accountId)
+                                                        {
+                                                            Console.WriteLine("Select account to transfer to:");
+                                                            Console.WriteLine($"press {account.Id}. {account.AccountName} {account.AccountNumber} {account.AccountType}");
+                                                            var accToTransferTo = Console.ReadLine();
+                                                            bool isSuccessful = int.TryParse(accToTransferTo, out otherAccountId);
+                                                            if (!isSuccessful)
+                                                            {
+                                                                Console.WriteLine("Customer Id must be a number");
+                                                                continue;
+                                                            }
+
+                                                            while (true)
+                                                            {
+                                                                Console.Write($"Enter amount to Transfer: ");
+                                                                var amountChoice = Console.ReadLine();
+                                                                bool response = double.TryParse(amountChoice, out amount);
+                                                                if (response)
+                                                                    break;
+                                                                else
+                                                                {
+                                                                    Console.WriteLine("Invalid transaction! Please enter a number");
+                                                                    continue;
+                                                                }
+
+                                                            }
+
+                                                            Console.WriteLine(newTransaction.TransferToOtherAccount(amount, accountId, otherAccountId, description, otherDescription));
+                                                            break;
+                                                        }
+
+                                                    }
+
+
+
+                                                }
+                                                else if (transferChoice == "2")
+                                                {
+                                                    Console.Write($"Enter amount to Transfer: ");
+                                                    var amountChoice = Console.ReadLine();
+
+                                                    while (true)
+                                                    {
+                                                        bool isSuccessful = double.TryParse(amountChoice, out amount);
+                                                        if (isSuccessful)
+                                                            break;
+                                                        else
+                                                        {
+                                                            Console.WriteLine("Invalid transaction! Please enter a number");
+                                                            continue;
+                                                        }
+
+                                                    }
+
+                                                    //SendMoney(double amount, int accountId, string receiverAccountNumber, string receiverAccountName, string description)
+
+                                                    while (true)
+                                                    {
+                                                        Console.Write("Enter receiver account number:");
+                                                        var inputedAccNum = Console.ReadLine();
+                                                        var isValidAccNum = Checker.ValidateTransAccount(inputedAccNum);
+                                                        Console.Clear();
+
+                                                        if (isValidAccNum != true)
+                                                        {
+                                                            Console.WriteLine("Invalid account number. Please check and try again");
+                                                            Console.WriteLine("");
+                                                            continue;
+                                                        }
+                                                        else
+                                                        {
+                                                            receiverAccNumber += inputedAccNum;
+                                                            Console.Clear();
+                                                            break;
+                                                        }
+                                                    }
+
+                                                    var transfer = newTransaction.SendMoney(amount, accountId, receiverAccNumber, description);
+                                                    Console.Clear();
+                                                    Console.WriteLine(transfer);
                                                     break;
                                                 }
-                                                else if (response == "2")
-                                                {
-                                                    description += $"{Utils.TransactionDescription.ATM} transfer";
-                                                    otherDescription += $"{Utils.TransactionDescription.POS} transfer from {customer.Account[accountId - 1]}";
+                                                else if (transferChoice == "3")
                                                     break;
-                                                }
-                                                else if (response == "3")
-                                                {
-                                                    description += $"{Utils.TransactionDescription.USSD} transfer";
-                                                    otherDescription += $"{Utils.TransactionDescription.POS} transfer from {customer.Account[accountId - 1]}";
-                                                    break;
-                                                }
-                                                else if (response == "4")
-                                                {
-                                                    description += $"{Utils.TransactionDescription.FIP} transfer";
-                                                    otherDescription += $"{Utils.TransactionDescription.POS} transfer from {customer.Account[accountId - 1]}";
-                                                    break;
-                                                }
+
                                                 else
                                                 {
-                                                    Console.WriteLine("Invalid input. Please try again");
+                                                    Console.WriteLine("Invalid input! Please try again");
+                                                    continue;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine("You do not have an account yet. Do you wish to create one?");
+                                                Console.WriteLine("1. Create Account");
+                                                Console.WriteLine("2. Back");
+                                                var userInput = Console.ReadLine();
+                                                if (userInput == "1")
+                                                {
+                                                    Console.Clear();
+                                                    var accountType = MenuOptions.CreateAccountUI();
+                                                    // Create new account instance for the customer
+                                                    var account = new Account
+                                                    {
+                                                        AccountType = accountType
+                                                    };
+
+                                                    var message = newCustomer.CreateAccount(account, customer);
+                                                    Console.Clear();
+                                                    Console.WriteLine(message);
+                                                }
+                                                else if (userInput == "2")
+                                                    break;
+                                                else
+                                                {
+                                                    Console.WriteLine("Invalid input");
                                                     continue;
                                                 }
                                             }
 
-                                            Console.WriteLine("");
-                                            Console.WriteLine("******************************************");
-                                            Console.WriteLine("Press 1 to transfer to your other accounts");
-                                            Console.WriteLine("Press 2 to transfer to another customer");
-                                            Console.WriteLine("Press 3 to cancel");
-                                            var transferChoice = Console.ReadLine();
-
-                                            double amount;
-                                            if (transferChoice == "1")
-                                            {
-                                                foreach (var account in customer.Account)
-                                                {
-                                                    if (customer.Account.Count < 2)
-                                                    {
-                                                        Console.WriteLine("You do not have any other account.");
-                                                        break;
-                                                    }
-                                                    Console.WriteLine("Select account to transfer to:");
-                                                    if (account.Id != accountId)
-                                                    {
-                                                        Console.WriteLine($"press {account.Id}. {account.AccountName} {account.AccountNumber} {account.AccountType}");
-                                                        var accToTransferTo = Console.ReadLine();
-                                                        bool isSuccessful = int.TryParse(accToTransferTo, out otherAccountId);
-                                                        if (!isSuccessful)
-                                                        {
-                                                            Console.WriteLine("Customer Id must be a number");
-                                                            continue;
-                                                        }
-
-                                                        while (true)
-                                                        {
-                                                            Console.Write($"Enter amount to Transfer: ");
-                                                            var amountChoice = Console.ReadLine();
-                                                            bool response = double.TryParse(amountChoice, out amount);
-                                                            if (response)
-                                                                break;
-                                                            else
-                                                            {
-                                                                Console.WriteLine("Invalid transaction! Please enter a number");
-                                                                continue;
-                                                            }
-
-                                                        }
-
-                                                        Console.WriteLine(newCustomer.TransferToOtherAccount(amount, accountId, otherAccountId, description, otherDescription));
-                                                        break;
-                                                    }
-
-                                                }
-
-
-
-                                            }
-                                            else if (transferChoice == "2")
-                                            {
-                                                Console.Write($"Enter amount to Transfer: ");
-                                                var amountChoice = Console.ReadLine();
-
-                                                while (true)
-                                                {
-                                                    bool isSuccessful = double.TryParse(amountChoice, out amount);
-                                                    if (isSuccessful)
-                                                        break;
-                                                    else
-                                                    {
-                                                        Console.WriteLine("Invalid transaction! Please enter a number");
-                                                        continue;
-                                                    }
-
-                                                }
-
-                                                //SendMoney(double amount, int accountId, string receiverAccountNumber, string receiverAccountName, string description)
-
-                                                while (true)
-                                                {
-                                                    Console.Write("Enter receiver account number:");
-                                                    var inputedAccNum = Console.ReadLine();
-                                                    var isValidAccNum = Checker.ValidateTransAccount(inputedAccNum);
-                                                    Console.Clear();
-
-                                                    if (isValidAccNum != true)
-                                                    {
-                                                        Console.WriteLine("Invalid account number. Please check and try again");
-                                                        Console.WriteLine("");
-                                                        continue;
-                                                    }
-                                                    else
-                                                    {
-                                                        receiverAccNumber += inputedAccNum;
-                                                        Console.Clear();
-                                                        break;
-                                                    }
-                                                }
-
-                                                var transfer = newCustomer.SendMoney(amount, accountId, receiverAccNumber, description);
-                                                Console.WriteLine(transfer);
-                                                Console.Clear();
-                                                break;
-                                            }
-                                            else if (transferChoice == "3")
-                                                break;
-
-                                            else
-                                            {
-                                                Console.WriteLine("Invalid input! Please try again");
-                                                continue;
-                                            }
 
 
                                         }
+
                                     }
                                     else if (input == "5")
                                     {
@@ -638,22 +647,58 @@ namespace BankApp.UI
                                         int accountId;
                                         while (true)
                                         {
-                                            Console.WriteLine("Select Account to carry out transaction");
-                                            foreach (var account in customer.Account)
+                                            if(customer.Account.Count > 0)
                                             {
-                                                Console.WriteLine($"{account.Id}. {account.AccountName} {account.AccountNumber} {account.AccountType}");
+                                                Console.Clear();
+                                                Console.WriteLine("Select Account to carry out transaction");
+                                                int count = 1;
+                                                foreach (var account in customer.Account)
+                                                {
+                                                    Console.WriteLine($"{count}. {account.AccountName} {account.AccountNumber} {account.AccountType}");
+                                                    count++;
+                                                }
+                                                var accId = Console.ReadLine();
+                                                bool success = int.TryParse(accId, out accountId);
+                                                if (!success)
+                                                {
+                                                    Console.WriteLine("Customer Id must be a number");
+                                                    continue;
+                                                }
+                                                Console.Clear();
+                                                var balance = newTransaction.GetAccountBalance(accountId);
+                                                Console.WriteLine(balance);
+                                                break;
                                             }
-                                            var accId = Console.ReadLine();
-                                            bool success = int.TryParse(accId, out accountId);
-                                            if (!success)
+                                            else
                                             {
-                                                Console.WriteLine("Customer Id must be a number");
-                                                continue;
+                                                Console.WriteLine("You do not have an account yet. Do you wish to create one?");
+                                                Console.WriteLine("1. Create Account");
+                                                Console.WriteLine("2. Back");
+                                                var userInput = Console.ReadLine();
+                                                if (userInput == "1")
+                                                {
+                                                    Console.Clear();
+                                                    var accountType = MenuOptions.CreateAccountUI();
+                                                    // Create new account instance for the customer
+                                                    var account = new Account
+                                                    {
+                                                        AccountType = accountType
+                                                    };
+
+                                                    var message = newCustomer.CreateAccount(account, customer);
+                                                    Console.Clear();
+                                                    Console.WriteLine(message);
+                                                }
+                                                else if (userInput == "2")
+                                                    break;
+                                                else
+                                                {
+                                                    Console.WriteLine("Invalid input");
+                                                    continue;
+                                                }
                                             }
-                                            Console.Clear();
-                                            var balance = newCustomer.GetAccountBalance(accountId);
-                                            Console.WriteLine(balance);
-                                            break;
+                                                
+                                            
                                         }
 
                                     }
@@ -662,8 +707,36 @@ namespace BankApp.UI
                                         while (true)
                                         {
                                             Console.Clear();
-                                            Console.WriteLine(newCustomer.GetAccountDetails());
-                                            break;
+                                            // variables needed for account statement
+                                            if (customer.Account.Count < 1)
+                                            {
+                                                Console.WriteLine("You have not created any account yet. Please create an account first");
+                                                break;
+                                            }
+                                            int count = 1;
+                                            string acntNum = "";
+                                            var accNumMap = new Dictionary<string, string>();
+                                            Console.WriteLine("Select Account to carry out transaction");
+                                            foreach (var account in customer.Account)
+                                            {
+                                                Console.WriteLine($"{count}. {account.AccountName} {account.AccountNumber} {account.AccountType}");
+                                                accNumMap.Add(count.ToString(), account.AccountNumber);
+                                                count++;
+                                            }
+                                            var accId = Console.ReadLine();
+
+                                            if (accNumMap.TryGetValue(accId, out acntNum))
+                                            {
+                                                Console.Clear();
+                                                Console.WriteLine(newTransaction.GetAccountDetails(acntNum));
+                                                break;
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine("Sorry, you have chosen an invalid option");
+                                                break;
+                                            }
+
                                         }
 
                                     }
@@ -671,7 +744,6 @@ namespace BankApp.UI
                                     {
                                         Console.Clear();
                                         // variables needed for account statement
-                                        int accountId;
                                         while (true)
                                         {
                                             if(customer.Account.Count < 1)
@@ -679,28 +751,40 @@ namespace BankApp.UI
                                                 Console.WriteLine("You have not created any account yet. Please create an account first");
                                                 break;
                                             }
+                                            int count = 1;
+                                            var accNumMap = new Dictionary<string, int>();
                                             Console.WriteLine("Select Account to carry out transaction");
                                             foreach (var account in customer.Account)
                                             {
-                                                Console.WriteLine($"{account.Id}. {account.AccountName} {account.AccountNumber} {account.AccountType}");
+                                                Console.WriteLine($"{count}. {account.AccountName} {account.AccountNumber} {account.AccountType}");
+                                                accNumMap.Add(count.ToString(), account.Id);
+                                                count++;
                                             }
                                             var accId = Console.ReadLine();
-                                            bool success = int.TryParse(accId, out accountId);
-                                            if (!success)
+
+                                            if (accNumMap.TryGetValue(accId, out int acntNum))
                                             {
-                                                Console.WriteLine("Customer Id must be a number");
-                                                continue;
+                                                Console.Clear();
+                                                Console.WriteLine(newTransaction.GetStatementOfAccount(acntNum));
+                                                break;
                                             }
-                                            Console.Clear();
-                                            Console.WriteLine(newCustomer.GetStatementOfAccount(accountId));
-                                            break;
+                                            else
+                                            {
+                                                Console.WriteLine("Sorry, you have chosen an invalid option");
+                                                break;
+                                            }
+                                            
                                         }
                                     }
                                     else if (input == "8")
                                     {
                                         var logout = AuthenticationRepository.Logout(email, password);
                                         if (logout == false)
+                                        {
+                                            Console.Clear();
                                             Console.WriteLine("Thank you for banking with us");
+                                        }
+     
                                         break;
                                     }
                                     else
